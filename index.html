@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Baybayin to Latin Translator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: 2rem;
+      color: #4A148C;
+    }
+    textarea {
+      font-size: 2rem;
+      width: 90%;
+      height: 100px;
+      margin-bottom: 10px;
+      padding: 10px;
+    }
+    .output {
+      font-size: 1.5rem;
+      margin-top: 20px;
+      background: #fff;
+      padding: 10px;
+      border: 2px solid #4A148C;
+      min-height: 40px;
+    }
+    .keyboard {
+      margin-top: 20px;
+    }
+    .key {
+      font-size: 1.8rem;
+      padding: 10px 15px;
+      margin: 4px;
+      background: #D1C4E9;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .key:hover {
+      background: #B39DDB;
+    }
+  </style>
+</head>
+<body>
+  <h1>Baybayin → Latin</h1>
+
+  <textarea id="baybayinInput" placeholder="Type Baybayin here..."></textarea>
+  <div class="output" id="latinOutput">Translation: </div>
+
+  <div class="keyboard">
+    <!-- Baybayin keys -->
+    <button class="key">ᜀ</button>
+    <button class="key">ᜁ</button>
+    <button class="key">ᜂ</button>
+    <button class="key">ᜃ</button>
+    <button class="key">ᜄ</button>
+    <button class="key">ᜅ</button>
+    <button class="key">ᜆ</button>
+    <button class="key">ᜇ</button>
+    <button class="key">ᜈ</button>
+    <button class="key">ᜉ</button>
+    <button class="key">ᜊ</button>
+    <button class="key">ᜋ</button>
+    <button class="key">ᜌ</button>
+    <button class="key">ᜎ</button>
+    <button class="key">ᜏ</button>
+    <button class="key">ᜐ</button>
+    <button class="key">ᜑ</button>
+    <button class="key">ᜒ</button>
+    <button class="key">ᜓ</button>
+    <button class="key">᜔</button>
+    <button class="key" onclick="clearText()">⛔</button>
+  </div>
+
+  <script>
+    const baybayinInput = document.getElementById('baybayinInput');
+    const latinOutput = document.getElementById('latinOutput');
+
+    const baybayinToLatin = {
+      "ᜀ": "A", "ᜁ": "E/I", "ᜂ": "O/U", "ᜃ": "KA", "ᜄ": "GA",
+      "ᜅ": "NGA", "ᜆ": "TA", "ᜇ": "DA/RA", "ᜈ": "NA",
+      "ᜉ": "PA", "ᜊ": "BA", "ᜋ": "MA", "ᜌ": "YA",
+      "ᜎ": "LA", "ᜏ": "WA", "ᜐ": "SA", "ᜑ": "HA",
+      "ᜒ": "i", "ᜓ": "u", "᜔": "stop"
+    };
+
+    function translateBaybayin(text) {
+      let result = "";
+      for (let char of text) {
+        result += (baybayinToLatin[char] || char) + " ";
+      }
+      return result.trim();
+    }
+
+    baybayinInput.addEventListener("input", () => {
+      latinOutput.textContent = "Translation: " + translateBaybayin(baybayinInput.value);
+    });
+
+    document.querySelectorAll(".key").forEach(button => {
+      button.addEventListener("click", () => {
+        if (button.textContent === "⛔") {
+          baybayinInput.value = "";
+        } else {
+          baybayinInput.value += button.textContent;
+        }
+        latinOutput.textContent = "Translation: " + translateBaybayin(baybayinInput.value);
+      });
+    });
+
+    function clearText() {
+      baybayinInput.value = "";
+      latinOutput.textContent = "Translation:";
+    }
+  </script>
+</body>
+</html>

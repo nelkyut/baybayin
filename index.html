@@ -76,6 +76,7 @@
     <button class="key">ᜒ</button>
     <button class="key">ᜓ</button>
     <button class="key">᜔</button>
+    <button class="key">␣</button> <!-- SPACE -->
     <button class="key" onclick="deleteLast()">⌫</button>
     <button class="key" onclick="clearText()">⛔</button>
   </div>
@@ -93,20 +94,22 @@
     };
 
     function translateBaybayin(text) {
-      let result = "";
+      let result = [];
       for (let i = 0; i < text.length; i++) {
         const char = text[i];
+
         if (char === "᜔") {
-          // Virama logic: remove vowel from previous character
-          result = result.trim().split(" ");
-          let prev = result.pop();
-          if (prev) {
-            prev = prev.replace(/[AEIOUaeiou\/]+/, ""); // remove vowel
+          // Remove vowel from previous character
+          if (result.length > 0) {
+            let prev = result.pop();
+            prev = prev.replace(/[AEIOUaeiou\/]+/, "");
             result.push(prev);
           }
-          continue;
+        } else if (char === "␣" || char === " ") {
+          result.push(" ");
+        } else {
+          result.push(baybayinToLatin[char] || char);
         }
-        result.push(baybayinToLatin[char] || char);
       }
       return "Translation: " + result.join(" ");
     }
@@ -122,6 +125,8 @@
           clearText();
         } else if (value === "⌫") {
           deleteLast();
+        } else if (value === "␣") {
+          baybayinInput.value += " ";
         } else {
           baybayinInput.value += value;
         }

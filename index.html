@@ -76,6 +76,7 @@
     <button class="key">ᜒ</button>
     <button class="key">ᜓ</button>
     <button class="key">᜔</button>
+    <button class="key" onclick="deleteLast()">⌫</button>
     <button class="key" onclick="clearText()">⛔</button>
   </div>
 
@@ -88,31 +89,51 @@
       "ᜅ": "NGA", "ᜆ": "TA", "ᜇ": "DA/RA", "ᜈ": "NA",
       "ᜉ": "PA", "ᜊ": "BA", "ᜋ": "MA", "ᜌ": "YA",
       "ᜎ": "LA", "ᜏ": "WA", "ᜐ": "SA", "ᜑ": "HA",
-      "ᜒ": "i", "ᜓ": "u", "᜔": "stop"
+      "ᜒ": "I", "ᜓ": "U"
     };
 
     function translateBaybayin(text) {
       let result = "";
-      for (let char of text) {
-        result += (baybayinToLatin[char] || char) + " ";
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (char === "᜔") {
+          // Virama logic: remove vowel from previous character
+          result = result.trim().split(" ");
+          let prev = result.pop();
+          if (prev) {
+            prev = prev.replace(/[AEIOUaeiou\/]+/, ""); // remove vowel
+            result.push(prev);
+          }
+          continue;
+        }
+        result.push(baybayinToLatin[char] || char);
       }
-      return result.trim();
+      return "Translation: " + result.join(" ");
     }
 
     baybayinInput.addEventListener("input", () => {
-      latinOutput.textContent = "Translation: " + translateBaybayin(baybayinInput.value);
+      latinOutput.textContent = translateBaybayin(baybayinInput.value);
     });
 
     document.querySelectorAll(".key").forEach(button => {
       button.addEventListener("click", () => {
-        if (button.textContent === "⛔") {
-          baybayinInput.value = "";
+        const value = button.textContent;
+        if (value === "⛔") {
+          clearText();
+        } else if (value === "⌫") {
+          deleteLast();
         } else {
-          baybayinInput.value += button.textContent;
+          baybayinInput.value += value;
         }
-        latinOutput.textContent = "Translation: " + translateBaybayin(baybayinInput.value);
+        latinOutput.textContent = translateBaybayin(baybayinInput.value);
       });
     });
+
+    function deleteLast() {
+      let current = baybayinInput.value;
+      baybayinInput.value = current.slice(0, -1);
+      latinOutput.textContent = translateBaybayin(baybayinInput.value);
+    }
 
     function clearText() {
       baybayinInput.value = "";

@@ -76,7 +76,7 @@
     <button class="key">ᜒ</button>
     <button class="key">ᜓ</button>
     <button class="key">᜔</button>
-    <button class="key">␣</button> <!-- SPACE -->
+    <button class="key">␣</button> <!-- Space -->
     <button class="key" onclick="deleteLast()">⌫</button>
     <button class="key" onclick="clearText()">⛔</button>
   </div>
@@ -89,27 +89,41 @@
       "ᜀ": "A", "ᜁ": "E/I", "ᜂ": "O/U", "ᜃ": "KA", "ᜄ": "GA",
       "ᜅ": "NGA", "ᜆ": "TA", "ᜇ": "DA/RA", "ᜈ": "NA",
       "ᜉ": "PA", "ᜊ": "BA", "ᜋ": "MA", "ᜌ": "YA",
-      "ᜎ": "LA", "ᜏ": "WA", "ᜐ": "SA", "ᜑ": "HA",
-      "ᜒ": "I", "ᜓ": "U"
+      "ᜎ": "LA", "ᜏ": "WA", "ᜐ": "SA", "ᜑ": "HA"
     };
 
     function translateBaybayin(text) {
       let result = [];
-      for (let i = 0; i < text.length; i++) {
-        const char = text[i];
+      let i = 0;
+      while (i < text.length) {
+        let char = text[i];
+        let next = text[i + 1] || '';
+        let combined = '';
 
-        if (char === "᜔") {
-          // Remove vowel from previous character
-          if (result.length > 0) {
-            let prev = result.pop();
-            prev = prev.replace(/[AEIOUaeiou\/]+/, "");
-            result.push(prev);
+        if (baybayinToLatin[char]) {
+          let base = baybayinToLatin[char];
+
+          if (next === 'ᜒ') {
+            combined = base.replace(/[AEIOU\/]+/, 'I');
+            i++;
+          } else if (next === 'ᜓ') {
+            combined = base.replace(/[AEIOU\/]+/, 'U');
+            i++;
+          } else if (next === '᜔') {
+            combined = base.replace(/[AEIOU\/]+/, '');
+            i++;
+          } else {
+            combined = base;
           }
-        } else if (char === "␣" || char === " ") {
-          result.push(" ");
+
+          result.push(combined);
+        } else if (char === '␣' || char === ' ') {
+          result.push(' ');
         } else {
-          result.push(baybayinToLatin[char] || char);
+          result.push(char);
         }
+
+        i++;
       }
       return "Translation: " + result.join(" ");
     }

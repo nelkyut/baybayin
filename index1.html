@@ -30,7 +30,6 @@
       padding: 10px;
       border: 2px solid #4A148C;
       min-height: 40px;
-      white-space: pre-wrap;
     }
     .keyboard {
       margin-top: 20px;
@@ -101,12 +100,6 @@
         let next = text[i + 1] || '';
         let combined = '';
 
-        if (char === ' ') {
-          result.push(' '); // preserve every space
-          i++;
-          continue;
-        }
-
         if (baybayinToLatin[char]) {
           let base = baybayinToLatin[char];
 
@@ -124,13 +117,15 @@
           }
 
           result.push(combined);
+        } else if (char === '␣' || char === ' ') {
+          result.push(' ');
         } else {
           result.push(char);
         }
 
         i++;
       }
-      return "Translation: " + result.join("");
+      return "Translation: " + result.join(" ");
     }
 
     baybayinInput.addEventListener("input", () => {

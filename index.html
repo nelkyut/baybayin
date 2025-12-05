@@ -1,189 +1,393 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Baybayin to Tagalog</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Construction Estimate Calculator</title>
   <style>
-    * {
-      box-sizing: border-box;
+    :root{
+      --accent:#f8d800; /* yellow */
+      --bg:#fff5cc;
+      --card:#fff;
+      --muted:#666;
+      --accent-dark:#e6c000;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
     }
-    body {
-      font-family: sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-    h1 {
-      font-family: 'Luckiest Guy', cursive;
-      font-size: 1.5rem;
-      color: #4A148C;
-      margin: 15px 0;
-    }
-    .content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px 20px;
-    }
-    textarea {
-      font-size: 1.2rem;
-      width: 100%;
-      height: 80px;
-      margin-bottom: 10px;
-      padding: 10px;
-      resize: vertical;
-    }
-    .output {
-      font-size: 1.1rem;
-      background: #fff;
-      padding: 10px;
-      border: 2px solid #4A148C;
-      min-height: 40px;
-      text-align: left;
-    }
-    .keyboard {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-      gap: 6px;
-      padding: 10px;
-      background: #D1C4E9;
-      border-top: 3px solid #9575CD;
-    }
-    .key {
-      font-size: 1.5rem;
-      padding: 12px 0;
-      background: #7E57C2;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .key:hover {
-      background: #673AB7;
-    }
-    footer {
-      background: #4A148C;
-      color: white;
-      text-align: center;
-      font-size: 0.9rem;
-      padding: 8px 0;
-    }
+    body{background: #f2f4f8; margin:0; padding:20px;}
+    .app{max-width:1100px;margin:0 auto}
+    header{background:var(--accent); padding:14px;border-radius:8px;text-align:center;}
+    header h1{margin:0;font-size:18px}
+    header p{margin:4px 0 0;font-size:12px;color:#333}
+    .tabs{display:flex;gap:8px;margin:18px 0;flex-wrap:wrap}
+    .tab{background:#fff;padding:8px 12px;border-radius:6px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+    .tab.active{background:linear-gradient(180deg,var(--card),#f7f7f7);border:2px solid var(--accent-dark)}
+
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:18px}
+    .card{background:#fff;padding:14px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+    .sidebar{position:sticky;top:20px;height:fit-content}
+
+    .row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    label{flex:1;color:var(--muted);font-size:13px}
+    input[type=number], select{width:140px;padding:8px;border-radius:6px;border:1px solid #ddd}
+    .yellow{background:var(--bg);border:1px solid var(--accent);padding:6px 8px;border-radius:6px}
+    .out{background:#0f172a;color:#fff;padding:8px;border-radius:6px;text-align:center;font-weight:600}
+    .out.small{font-size:13px;padding:6px}
+    h3{margin:8px 0}
+    .tile{display:flex;gap:8px;flex-direction:column}
+    .btn{display:inline-block;background:var(--accent-dark);color:#111;padding:8px 12px;border-radius:6px;text-decoration:none;font-weight:600;cursor:pointer}
+    footer{margin-top:14px;font-size:12px;color:#444}
+    .formula{font-size:13px;color:#444;background:#fafafa;padding:8px;border-radius:6px;border:1px dashed #eee}
+    .result-list{display:grid;gap:8px}
+    .small-muted{font-size:12px;color:#777}
+
+    /* responsive */
+    @media(max-width:900px){.grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
+  <div class="app">
+    <header>
+      <h1>Construction Estimate Calculator</h1>
+      <p>Multi-module estimator — Footing, Slab, Beam, Column, Rebar, CHB Wall, Paint, Formworks, Labor</p>
+    </header>
 
-  <h1>Baybayin → Tagalog</h1>
+    <div class="tabs" id="tabs"></div>
 
-  <div class="content">
-    <textarea id="baybayinInput" placeholder="I-type ang Baybayin dito..."></textarea>
-    <div class="output" id="latinOutput">Translation: </div>
+    <div class="grid">
+      <div class="card" id="main">
+        <!-- dynamic content here -->
+      </div>
+
+      <div class="sidebar card">
+        <div class="tile">
+          <h3>Quick Inputs</h3>
+          <div class="row"><label>Concrete Class (ratio)</label><select id="mixClass"><option value="1:2:4">Class A 1:2:4</option><option value="1:1.5:3">1:1.5:3</option></select></div>
+          <div class="row"><label>Cement bag volume (cu.m)</label><input id="bagVol" type="number" step="0.001" value="0.035"/></div>
+          <div class="row"><label>Cement bag weight (kg)</label><input id="bagKg" type="number" step="0.1" value="40"/></div>
+          <div class="row"><label>Allowances (%)</label><input id="wastePct" type="number" step="0.1" value="10"/></div>
+          <div style="margin-top:8px"><button class="btn" onclick="downloadProject()">Download HTML</button></div>
+          <div style="margin-top:8px"><a class="small-muted">Tip: I-upload sa GitHub repo bilang index.html</a></div>
+        </div>
+
+        <hr/>
+        <div class="tile">
+          <h3>Outputs</h3>
+          <div id="globalOutputs" class="result-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>Made for you. Save to your GitHub and optionally convert to APK using html2app.dev or similar.</footer>
   </div>
 
-  <div class="keyboard">
-    <button class="key">ᜀ</button>
-    <button class="key">ᜁ</button>
-    <button class="key">ᜂ</button>
-    <button class="key">ᜃ</button>
-    <button class="key">ᜄ</button>
-    <button class="key">ᜅ</button>
-    <button class="key">ᜆ</button>
-    <button class="key">ᜇ</button>
-    <button class="key">ᜈ</button>
-    <button class="key">ᜉ</button>
-    <button class="key">ᜊ</button>
-    <button class="key">ᜋ</button>
-    <button class="key">ᜌ</button>
-    <button class="key">ᜎ</button>
-    <button class="key">ᜏ</button>
-    <button class="key">ᜐ</button>
-    <button class="key">ᜑ</button>
-    <button class="key">ᜒ</button>
-    <button class="key">ᜓ</button>
-    <button class="key">᜔</button>
-    <button class="key" onclick="deleteLast()">⌫</button>
-    <button class="key">␣</button>
-    <button class="key" onclick="clearText()">⛔</button>
-  </div>
+<script>
+const tabs = [
+  {id:'footing', title:'Footing'},
+  {id:'slab', title:'Slab'},
+  {id:'beam', title:'Beam'},
+  {id:'column', title:'Column'},
+  {id:'rebar', title:'Rebar Estimator'},
+  {id:'chb', title:'CHB Wall'},
+  {id:'paint', title:'Paint'},
+  {id:'form', title:'Formworks'},
+  {id:'labor', title:'Labor Estimate'}
+];
 
-  <footer>
-    Awanggn TV © 2025 all rights reserved
-  </footer>
+const tabContainer = document.getElementById('tabs');
+const main = document.getElementById('main');
+const mixClass = document.getElementById('mixClass');
+const bagVol = document.getElementById('bagVol');
+const bagKg = document.getElementById('bagKg');
+const wastePct = document.getElementById('wastePct');
+const globalOutputs = document.getElementById('globalOutputs');
 
-  <script>
-    const baybayinInput = document.getElementById('baybayinInput');
-    const latinOutput = document.getElementById('latinOutput');
+tabs.forEach(t=>{
+  const el = document.createElement('div'); el.className='tab'; el.textContent=t.title; el.dataset.id=t.id;
+  el.onclick = ()=>selectTab(t.id);
+  tabContainer.appendChild(el);
+});
+selectTab('footing');
 
-    const baybayinToLatin = {
-      "ᜀ": "A", "ᜁ": "I", "ᜂ": "U", "ᜃ": "KA", "ᜄ": "GA",
-      "ᜅ": "NGA", "ᜆ": "TA", "ᜇ": "DA", "ᜈ": "NA",
-      "ᜉ": "PA", "ᜊ": "BA", "ᜋ": "MA", "ᜌ": "YA",
-      "ᜎ": "LA", "ᜏ": "WA", "ᜐ": "SA", "ᜑ": "HA"
-    };
+function selectTab(id){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active', x.dataset.id===id));
+  renderTab(id);
+}
 
-    function translateBaybayin(text) {
-      let result = [];
-      let i = 0;
-      while (i < text.length) {
-        let char = text[i];
-        let next = text[i + 1] || '';
-        let base = baybayinToLatin[char];
+function renderTab(id){
+  if(id==='footing') return renderFooting();
+  if(id==='slab') return renderSlab();
+  if(id==='beam') return renderBeam();
+  if(id==='column') return renderColumn();
+  if(id==='rebar') return renderRebar();
+  if(id==='chb') return renderCHB();
+  if(id==='paint') return renderPaint();
+  if(id==='form') return renderFormworks();
+  if(id==='labor') return renderLabor();
+}
 
-        if (base) {
-          if (next === '᜔') {
-            result.push(base.slice(0, -1));
-            i++;
-          } else if (next === 'ᜒ') {
-            result.push(base.slice(0, -1) + 'I');
-            i++;
-          } else if (next === 'ᜓ') {
-            result.push(base.slice(0, -1) + 'U');
-            i++;
-          } else {
-            result.push(base);
-          }
-        } else if (char === '␣' || char === ' ') {
-          result.push(' ');
-        } else {
-          result.push(char);
-        }
+function el(html){const d=document.createElement('div');d.innerHTML=html;return d.firstElementChild}
 
-        i++;
-      }
-      return "Translation: " + result.join(" ");
-    }
+function renderFooting(){
+  main.innerHTML='';
+  const card=document.createElement('div'); card.innerHTML = `
+    <h2>Footing Calculator</h2>
+    <div class="row"><label>Length (m)</label><input id="f_L" type="number" step="0.001" value="1"/></div>
+    <div class="row"><label>Width (m)</label><input id="f_W" type="number" step="0.001" value="0.5"/></div>
+    <div class="row"><label>Thickness / Depth (mm)</label><input id="f_T" type="number" step="0.1" value="200"/></div>
+    <div class="row"><label>Number of Footings</label><input id="f_n" type="number" step="1" value="1"/></div>
+    <div class="row"><label>Concrete mix (use top)</label><div class="yellow">Use site mix</div></div>
+    <div style="margin-top:12px;"><button class="btn" onclick="calcFooting()">Compute</button></div>
+    <hr/>
+    <div id="f_out"></div>
+  `;
+  main.appendChild(card);
+}
 
-    baybayinInput.addEventListener("input", () => {
-      latinOutput.textContent = translateBaybayin(baybayinInput.value);
-    });
+function calcFooting(){
+  const L=+document.getElementById('f_L').value;
+  const W=+document.getElementById('f_W').value;
+  const Tmm=+document.getElementById('f_T').value; const T=Tmm/1000;
+  const n=+document.getElementById('f_n').value;
+  const vol = L*W*T*n; // cu.m total
+  // Simple assumption for material proportions for 1:2:4 by volume (cement:sand:gravel)
+  const mix= (mixClass.value==='1:2:4') ? {c:1,s:2,g:4,tot:7} : {c:1,s:1.5,g:3,tot:5.5};
+  const cementVol = vol * (mix.c / mix.tot);
+  const sandVol = vol * (mix.s / mix.tot);
+  const gravelVol = vol * (mix.g / mix.tot);
+  const waste = +wastePct.value/100;
+  const cementBags = Math.ceil( (cementVol*(1+waste)) / +bagVol.value );
 
-    document.querySelectorAll(".key").forEach(button => {
-      button.addEventListener("click", () => {
-        const value = button.textContent;
-        if (value === "⛔") {
-          clearText();
-        } else if (value === "⌫") {
-          deleteLast();
-        } else if (value === "␣") {
-          baybayinInput.value += " ";
-        } else {
-          baybayinInput.value += value;
-        }
-        latinOutput.textContent = translateBaybayin(baybayinInput.value);
-      });
-    });
+  document.getElementById('f_out').innerHTML = `
+    <div class="result-list">
+      <div class="out">Total Volume: ${vol.toFixed(3)} cu.m</div>
+      <div class="formula">Volume = L × W × T  = ${L} × ${W} × ${T} = ${vol.toFixed(3)} cu.m</div>
+      <div class="out small">Cement (vol): ${cementVol.toFixed(3)} cu.m → ${cementBags} bags (incl ${wastePct.value}% waste)</div>
+      <div class="out small">Sand: ${sandVol.toFixed(3)} cu.m</div>
+      <div class="out small">Gravel: ${gravelVol.toFixed(3)} cu.m</div>
+    </div>
+  `;
+  setGlobal('Footing Volume', vol);
+}
 
-    function deleteLast() {
-      let current = baybayinInput.value;
-      baybayinInput.value = current.slice(0, -1);
-      latinOutput.textContent = translateBaybayin(baybayinInput.value);
-    }
+function renderSlab(){
+  main.innerHTML='';
+  main.innerHTML = `
+    <h2>Slab Calculator</h2>
+    <div class="row"><label>Length (m)</label><input id="s_L" type="number" step="0.001" value="3"/></div>
+    <div class="row"><label>Width (m)</label><input id="s_W" type="number" step="0.001" value="2"/></div>
+    <div class="row"><label>Thickness (mm)</label><input id="s_T" type="number" step="0.1" value="100"/></div>
+    <div class="row"><label>Number of slabs / panels</label><input id="s_n" type="number" value="1"/></div>
+    <div style="margin-top:12px;"><button class="btn" onclick="calcSlab()">Compute</button></div>
+    <hr/>
+    <div id="s_out"></div>
+  `;
+}
+function calcSlab(){
+  const L=+document.getElementById('s_L').value; const W=+document.getElementById('s_W').value; const Tmm=+document.getElementById('s_T').value; const T=Tmm/1000; const n=+document.getElementById('s_n').value;
+  const vol = L*W*T*n;
+  const mix= (mixClass.value==='1:2:4') ? {c:1,s:2,g:4,tot:7} : {c:1,s:1.5,g:3,tot:5.5};
+  const cementVol = vol * (mix.c / mix.tot);
+  const cementBags = Math.ceil( (cementVol*(1+ (+wastePct.value)/100 )) / +bagVol.value );
+  document.getElementById('s_out').innerHTML = `
+    <div class="out">Total Slab Volume: ${vol.toFixed(3)} cu.m</div>
+    <div class="out small">Cement: ${cementBags} bags</div>
+    <div class="formula">Volume = L×W×T</div>
+  `;
+  setGlobal('Slab Volume', vol);
+}
 
-    function clearText() {
-      baybayinInput.value = "";
-      latinOutput.textContent = "Translation:";
-    }
-  </script>
+function renderBeam(){
+  main.innerHTML='';
+  main.innerHTML = `
+    <h2>Beam Calculator</h2>
+    <div class="row"><label>Length (m)</label><input id="b_L" type="number" step="0.001" value="3"/></div>
+    <div class="row"><label>Width (mm)</label><input id="b_W" type="number" step="1" value="200"/></div>
+    <div class="row"><label>Height (mm)</label><input id="b_H" type="number" step="1" value="300"/></div>
+    <div class="row"><label>Number of Beams</label><input id="b_n" type="number" value="1"/></div>
+    <div style="margin-top:12px;"><button class="btn" onclick="calcBeam()">Compute</button></div>
+    <hr/>
+    <div id="b_out"></div>
+  `;
+}
+function calcBeam(){
+  const L=+document.getElementById('b_L').value; const Wmm=+document.getElementById('b_W').value; const Hmm=+document.getElementById('b_H').value; const n=+document.getElementById('b_n').value;
+  const W=Wmm/1000; const H=Hmm/1000;
+  const vol = L*W*H*n;
+  const mix= (mixClass.value==='1:2:4') ? {c:1,s:2,g:4,tot:7} : {c:1,s:1.5,g:3,tot:5.5};
+  const cementVol = vol * (mix.c / mix.tot);
+  const cementBags = Math.ceil( (cementVol*(1+ (+wastePct.value)/100 )) / +bagVol.value );
+  document.getElementById('b_out').innerHTML = `
+    <div class="out">Beam Volume: ${vol.toFixed(3)} cu.m</div>
+    <div class="out small">Cement: ${cementBags} bags</div>
+  `;
+  setGlobal('Beam Volume', vol);
+}
+
+function renderColumn(){
+  main.innerHTML='';
+  main.innerHTML = `
+    <h2>Column Calculator</h2>
+    <div class="row"><label>Height / Length (m)</label><input id="c_L" type="number" step="0.001" value="2.5"/></div>
+    <div class="row"><label>Section Width (mm)</label><input id="c_W" type="number" step="1" value="300"/></div>
+    <div class="row"><label>Section Depth (mm)</label><input id="c_D" type="number" step="1" value="300"/></div>
+    <div class="row"><label>Number of Columns</label><input id="c_n" type="number" value="4"/></div>
+    <div style="margin-top:12px;"><button class="btn" onclick="calcColumn()">Compute</button></div>
+    <hr/>
+    <div id="c_out"></div>
+  `;
+}
+function calcColumn(){
+  const L=+document.getElementById('c_L').value; const Wmm=+document.getElementById('c_W').value; const Dmm=+document.getElementById('c_D').value; const n=+document.getElementById('c_n').value;
+  const W=Wmm/1000; const D=Dmm/1000; const vol = L*W*D*n;
+  const mix= (mixClass.value==='1:2:4') ? {c:1,s:2,g:4,tot:7} : {c:1,s:1.5,g:3,tot:5.5};
+  const cementVol = vol * (mix.c / mix.tot);
+  const cementBags = Math.ceil( (cementVol*(1+ (+wastePct.value)/100 )) / +bagVol.value );
+  document.getElementById('c_out').innerHTML = `
+    <div class="out">Column Volume: ${vol.toFixed(3)} cu.m</div>
+    <div class="out small">Cement: ${cementBags} bags</div>
+  `;
+  setGlobal('Column Volume', vol);
+}
+
+function renderRebar(){
+  main.innerHTML='';
+  main.innerHTML = `
+    <h2>Rebar Estimator (approx)</h2>
+    <p class="small-muted">Simple estimator: calculates total length of bars and approximate weight using nominal diameters.</p>
+    <div class="row"><label>Number of bars</label><input id="r_count" type="number" value="10"/></div>
+    <div class="row"><label>Length per bar (m)</label><input id="r_len" type="number" step="0.01" value="3"/></div>
+    <div class="row"><label>Diameter (mm)</label><select id="r_d"><option>8</option><option>10</option><option>12</option><option>16</option><option>20</option></select></div>
+    <div style="margin-top:12px"><button class="btn" onclick="calcRebar()">Compute</button></div>
+    <hr/>
+    <div id="r_out"></div>
+  `;
+}
+function calcRebar(){
+  const count=+document.getElementById('r_count').value; const len=+document.getElementById('r_len').value; const d=+document.getElementById('r_d').value;
+  const totalLen = count*len;
+  // weight per meter for rebar = (d^2)/162 approx (kg/m)
+  const kgpm = (d*d)/162;
+  const totalKg = kgpm * totalLen;
+  document.getElementById('r_out').innerHTML = `
+    <div class="out">Total Length: ${totalLen.toFixed(2)} m</div>
+    <div class="out small">Estimated Weight: ${totalKg.toFixed(2)} kg (using W≈d²/162)</div>
+  `;
+  setGlobal('Rebar kg', totalKg);
+}
+
+function renderCHB(){
+  main.innerHTML='';
+  main.innerHTML = `
+    <h2>CHB (Concrete Hollow Block) Wall</h2>
+    <div class="row"><label>Wall Length (m)</label><input id="w_L" type="number" step="0.01" value="6"/></div>
+    <div class="row"><label>Wall Height (m)</label><input id="w_H" type="number" step="0.01" value="2.4"/></div>
+    <div class="row"><label>CHB size (mm) — width x height</label><select id="chb_size"><option value="390x190">390×190</option><option value="290x140">290×140</option></select></div>
+    <div class="row"><label>Mortar joint (mm)</label><input id="m_j" type="number" value="10"/></div>
+    <div style="margin-top:12px"><button class="btn" onclick="calcCHB()">Compute</button></div>
+    <hr/>
+    <div id="chb_out"></div>
+  `;
+}
+function calcCHB(){
+  const L=+document.getElementById('w_L').value; const H=+document.getElementById('w_H').value; const size=document.getElementById('chb_size').value; const mj=+document.getElementById('m_j').value/1000;
+  // approximate block face area
+  const dims = size.split('x').map(x=>+x)/1000; // [length,width]
+  const blockH = dims[0]; const blockW = dims[1]; // in m
+  const wallArea = L*H;
+  const blockArea = blockH*blockW;
+  const noBlocks = Math.ceil(wallArea / blockArea * 1.05); // add 5% wastage
+  // mortar estimate: assume mortar per block volume small; approximate mortar vol = 0.03 cu.m per m2 wall
+  const mortarVol = wallArea * 0.03; // cu.m
+  document.getElementById('chb_out').innerHTML = `
+    <div class="out">Wall Area: ${wallArea.toFixed(2)} m²</div>
+    <div class="out small">Approx CHB required: ${noBlocks} pcs (incl 5% wastage)</div>
+    <div class="out small">Approx Mortar: ${mortarVol.toFixed(3)} cu.m</div>
+  `;
+  setGlobal('CHB pcs', noBlocks);
+}
+
+function renderPaint(){
+  main.innerHTML='';
+  main.innerHTML = `
+    <h2>Paint Estimator</h2>
+    <div class="row"><label>Surface Area (m²)</label><input id="p_area" type="number" step="0.1" value="20"/></div>
+    <div class="row"><label>Coats</label><input id="p_coats" type="number" value="2"/></div>
+    <div class="row"><label>Coverage (m² per liter)</label><input id="p_cov" type="number" value="10"/></div>
+    <div style="margin-top:12px"><button class="btn" onclick="calcPaint()">Compute</button></div>
+    <hr/>
+    <div id="p_out"></div>
+  `;
+}
+function calcPaint(){
+  const area=+document.getElementById('p_area').value; const coats=+document.getElementById('p_coats').value; const cov=+document.getElementById('p_cov').value;
+  const liters = (area*coats)/cov;
+  const waste = liters*(+wastePct.value/100);
+  document.getElementById('p_out').innerHTML = `
+    <div class="out">Paint needed: ${(liters+waste).toFixed(2)} liters (incl ${wastePct.value}% waste)</div>
+  `;
+  setGlobal('Paint L', liters+waste);
+}
+
+function renderFormworks(){
+  main.innerHTML='';
+  main.innerHTML = `
+    <h2>Formworks Estimate</h2>
+    <div class="row"><label>Formwork Area (m²)</label><input id="f_area" type="number" step="0.1" value="6"/></div>
+    <div class="row"><label>Formwork rate (per m²)</label><input id="f_rate" type="number" value="120"/></div>
+    <div style="margin-top:12px"><button class="btn" onclick="calcFormworks()">Compute</button></div>
+    <hr/>
+    <div id="form_out"></div>
+  `;
+}
+function calcFormworks(){
+  const area=+document.getElementById('f_area').value; const rate=+document.getElementById('f_rate').value;
+  const cost = area*rate;
+  document.getElementById('form_out').innerHTML = `<div class="out">Estimated Formwork Cost: ₱${cost.toFixed(2)}</div>`;
+  setGlobal('Formwork cost', cost);
+}
+
+function renderLabor(){
+  main.innerHTML='';
+  main.innerHTML = `
+    <h2>Labor Estimate</h2>
+    <div class="row"><label>Number of Workers</label><input id="l_workers" type="number" value="3"/></div>
+    <div class="row"><label>Daily Wage per Worker (₱)</label><input id="l_wage" type="number" value="600"/></div>
+    <div class="row"><label>Days</label><input id="l_days" type="number" value="5"/></div>
+    <div style="margin-top:12px"><button class="btn" onclick="calcLabor()">Compute</button></div>
+    <hr/>
+    <div id="l_out"></div>
+  `;
+}
+function calcLabor(){
+  const w=+document.getElementById('l_workers').value; const wage=+document.getElementById('l_wage').value; const days=+document.getElementById('l_days').value;
+  const total = w*wage*days;
+  document.getElementById('l_out').innerHTML = `<div class="out">Labor Cost: ₱${total.toFixed(2)}</div>`;
+  setGlobal('Labor cost', total);
+}
+
+function setGlobal(key, val){
+  const el = document.createElement('div'); el.textContent = `${key}: ${ (typeof val==='number')? (val.toFixed?val.toFixed(3):val):val }`;
+  // replace or append
+  const existing = Array.from(globalOutputs.children).find(x=>x.textContent.startsWith(key+':'));
+  if(existing) existing.textContent = el.textContent; else globalOutputs.appendChild(el);
+}
+
+function downloadProject(){
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='index.html'; a.click(); URL.revokeObjectURL(url);
+}
+
+// small helper: auto save inputs to localStorage
+window.addEventListener('beforeunload', ()=>{
+  const data={}; document.querySelectorAll('input,select').forEach(i=>{ if(i.id) data[i.id]=i.value }); localStorage.setItem('cec_save', JSON.stringify(data));
+});
+
+window.addEventListener('load', ()=>{
+  try{ const data=JSON.parse(localStorage.getItem('cec_save')||'{}'); Object.keys(data).forEach(k=>{const el=document.getElementById(k); if(el) el.value=data[k];}) }catch(e){}
+});
+
+</script>
 </body>
 </html>
